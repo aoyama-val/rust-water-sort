@@ -13,8 +13,8 @@ mod model;
 use crate::model::*;
 
 pub const TITLE: &str = "rust-water-sort";
-pub const SCREEN_WIDTH: i32 = 600;
-pub const SCREEN_HEIGHT: i32 = 640;
+pub const SCREEN_WIDTH: i32 = 450;
+pub const SCREEN_HEIGHT: i32 = 460;
 pub const CARD_W: i32 = 124;
 pub const CARD_H: i32 = 176;
 
@@ -164,13 +164,42 @@ fn load_resources<'a>(
     resources
 }
 
-fn render(
-    canvas: &mut Canvas<Window>,
-    game: &Game,
-    resources: &mut Resources,
-) -> Result<(), String> {
+fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Result<(), String> {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
+
+    for i in 0..TUBE_COUNT {
+        const TUBE_PER_ROW: u32 = 5;
+        let column: u32 = i as u32 % TUBE_PER_ROW;
+        let row: u32 = i as u32 / TUBE_PER_ROW;
+        const PORTION_WIDTH: u32 = 50;
+        const PORTION_HEIGHT: u32 = 36;
+        let width = PORTION_WIDTH + 2;
+        let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
+        let x = 40 + 80 * column;
+        let y = 40 + 210 * row;
+        canvas.set_draw_color(Color::WHITE);
+        canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
+
+        let tube = &game.tubes[i];
+        for (j, portion) in tube.iter().enumerate() {
+            let color = match portion {
+                1 => Color::RGB(192, 0, 0),
+                2 => Color::RGB(0, 192, 0),
+                3 => Color::RGB(0, 0, 192),
+                4 => Color::RGB(192, 192, 0),
+                5 => Color::RGB(0, 192, 192),
+                6 => Color::RGB(192, 0, 192),
+                7 => Color::RGB(192, 192, 192),
+                8 => Color::RGB(255, 192, 0),
+                _ => panic!(),
+            };
+            canvas.set_draw_color(color);
+            let x = x + 1;
+            let y: u32 = y + 14 + (MAX_PORTION as u32 - j as u32 - 1) * PORTION_HEIGHT;
+            canvas.fill_rect(Rect::new(x as i32, y as i32, PORTION_WIDTH, PORTION_HEIGHT))?;
+        }
+    }
 
     canvas.present();
 
