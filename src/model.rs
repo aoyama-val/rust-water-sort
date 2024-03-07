@@ -5,6 +5,7 @@ pub const FPS: i32 = 30;
 pub const TUBE_COUNT: usize = 10;
 pub const MAX_PORTION: usize = 4;
 pub const COLOR_COUNT: usize = TUBE_COUNT - 2;
+pub const EMPTY: i32 = 0;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Command {
@@ -14,7 +15,8 @@ pub enum Command {
 
 pub struct Game {
     pub rng: StdRng,
-    pub is_over: bool,
+    pub frame: i32,
+    pub is_clear: bool,
     pub requested_sounds: Vec<&'static str>,
     pub tubes: Vec<Vec<i32>>,
     pub from_tube: Option<usize>,
@@ -33,7 +35,8 @@ impl Game {
 
         let game = Game {
             rng: rng,
-            is_over: false,
+            frame: -1,
+            is_clear: false,
             requested_sounds: Vec::new(),
             tubes: Vec::new(),
             from_tube: None,
@@ -43,7 +46,7 @@ impl Game {
     }
 
     pub fn init(&mut self) {
-        let mut portions: Vec<i32> = vec![0; MAX_PORTION * COLOR_COUNT];
+        let mut portions: Vec<i32> = vec![EMPTY; MAX_PORTION * COLOR_COUNT];
         let mut index = 0;
         for i in 0..COLOR_COUNT {
             for _ in 0..MAX_PORTION {
@@ -53,6 +56,7 @@ impl Game {
         }
         portions.shuffle(&mut self.rng);
 
+        self.frame = -1;
         self.tubes = Vec::new();
 
         for i in 0..COLOR_COUNT {
@@ -66,7 +70,9 @@ impl Game {
     }
 
     pub fn update(&mut self, command: Command) {
-        if self.is_over {
+        self.frame += 1;
+
+        if self.is_clear {
             return;
         }
 
@@ -83,6 +89,7 @@ impl Game {
                         self.from_tube = None;
                     } else if self.transferrable_to(index) {
                         self.transfer(index);
+                        self.check_clear();
                     }
                 }
             }
@@ -113,5 +120,15 @@ impl Game {
         }
         self.from_tube = None;
         self.requested_sounds.push("pour.wav");
+    }
+
+    pub fn check_clear(&mut self) {
+        if self.tubes.iter().all(|tube| {
+            tube.iter().all(|portion| *portion == EMPTY)
+                || tube.len() == MAX_PORTION && tube.iter().all(|portion| *portion == tube[0])
+        }) {
+            self.is_clear = true;
+            self.requested_sounds.push("bravo.wav");
+        }
     }
 }
