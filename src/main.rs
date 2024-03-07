@@ -1,10 +1,10 @@
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::mixer;
+use sdl2::mouse::MouseButton;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use sdl2::rect::{Point, Rect};
 use sdl2::render::{BlendMode, Canvas, Texture, TextureCreator};
-use sdl2::sys::KeyCode;
 use sdl2::video::{Window, WindowContext};
 use std::collections::HashMap;
 use std::fs;
@@ -53,8 +53,6 @@ pub fn main() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
 
-    sdl_context.mouse().show_cursor(false);
-
     init_mixer();
 
     let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
@@ -68,8 +66,24 @@ pub fn main() -> Result<(), String> {
     let mut game = Game::new();
     game.init();
 
+    println!("Select tube with mouse");
     println!("Keys:");
     println!("  Space   : Restart");
+
+    let mut clickable_rects: Vec<(usize, Rect)> = Vec::new();
+
+    for i in 0..TUBE_COUNT {
+        const TUBE_PER_ROW: u32 = 5;
+        let column: u32 = i as u32 % TUBE_PER_ROW;
+        let row: u32 = i as u32 / TUBE_PER_ROW;
+        const PORTION_WIDTH: u32 = 50;
+        const PORTION_HEIGHT: u32 = 36;
+        let width = PORTION_WIDTH + 2;
+        let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
+        let x = 40 + 80 * column;
+        let y = 40 + 210 * row;
+        clickable_rects.push((i, Rect::new(x as i32, y as i32, width, height)));
+    }
 
     'running: loop {
         let started = SystemTime::now();
@@ -92,6 +106,17 @@ pub fn main() -> Result<(), String> {
                         }
                         _ => {}
                     };
+                }
+                Event::MouseButtonDown {
+                    x, y, mouse_btn, ..
+                } => {
+                    if mouse_btn == MouseButton::Left {
+                        for (index, rect) in &clickable_rects {
+                            if rect.contains_point(Point::new(x, y)) {
+                                break;
+                            }
+                        }
+                    }
                 }
                 _ => {}
             }
