@@ -9,6 +9,7 @@ pub const COLOR_COUNT: usize = TUBE_COUNT - 2;
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Command {
     None,
+    Select(usize),
 }
 
 pub struct Game {
@@ -16,6 +17,7 @@ pub struct Game {
     pub is_over: bool,
     pub requested_sounds: Vec<&'static str>,
     pub tubes: Vec<Vec<i32>>,
+    pub from_tube: Option<usize>,
 }
 
 impl Game {
@@ -34,6 +36,7 @@ impl Game {
             is_over: false,
             requested_sounds: Vec::new(),
             tubes: Vec::new(),
+            from_tube: None,
         };
 
         game
@@ -69,6 +72,43 @@ impl Game {
 
         match command {
             Command::None => {}
+            Command::Select(index) => {
+                if self.from_tube == None {
+                    if self.transferrable_from(index) {
+                        self.from_tube = Some(index);
+                        println!("from: {index}");
+                    }
+                } else {
+                    if self.transferrable_to(index) {
+                        self.transfer(index);
+                    }
+                }
+            }
         }
+    }
+
+    pub fn transferrable_from(&self, index: usize) -> bool {
+        self.tubes[index].len() != 0
+    }
+
+    pub fn transferrable_to(&self, index: usize) -> bool {
+        self.tubes[index].len() == 0
+            || (self.tubes[index].len() != MAX_PORTION
+                && self.tubes[index].last() == self.tubes[self.from_tube.unwrap()].last())
+    }
+
+    pub fn transfer(&mut self, index: usize) {
+        println!("transfer {} -> {}", self.from_tube.unwrap(), index);
+        let from_tube = self.from_tube.unwrap();
+        let move_color = *self.tubes[from_tube].last().unwrap();
+        while self.tubes[from_tube].len() > 0
+            && *self.tubes[from_tube].last().unwrap() == move_color
+            && self.tubes[index].len() < MAX_PORTION
+        {
+            let portion = self.tubes[from_tube].pop().unwrap();
+            self.tubes[index].push(portion);
+            println!("transfer");
+        }
+        self.from_tube = None;
     }
 }

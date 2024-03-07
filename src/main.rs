@@ -113,6 +113,7 @@ pub fn main() -> Result<(), String> {
                     if mouse_btn == MouseButton::Left {
                         for (index, rect) in &clickable_rects {
                             if rect.contains_point(Point::new(x, y)) {
+                                command = Command::Select(*index);
                                 break;
                             }
                         }
@@ -203,7 +204,11 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
         let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
         let x = 40 + 80 * column;
         let y = 40 + 210 * row;
-        canvas.set_draw_color(Color::WHITE);
+        if game.from_tube == Some(i) {
+            canvas.set_draw_color(Color::RGB(128, 255, 255));
+        } else {
+            canvas.set_draw_color(Color::WHITE);
+        }
         canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
 
         let tube = &game.tubes[i];
@@ -216,7 +221,7 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
                 5 => Color::RGB(0, 192, 192),
                 6 => Color::RGB(192, 0, 192),
                 7 => Color::RGB(192, 192, 192),
-                8 => Color::RGB(255, 192, 0),
+                8 => Color::RGB(255, 96, 0),
                 _ => panic!(),
             };
             canvas.set_draw_color(color);
