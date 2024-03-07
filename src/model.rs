@@ -79,7 +79,9 @@ impl Game {
                         println!("from: {index}");
                     }
                 } else {
-                    if self.transferrable_to(index) {
+                    if self.from_tube == Some(index) {
+                        self.from_tube = None;
+                    } else if self.transferrable_to(index) {
                         self.transfer(index);
                     }
                 }
@@ -110,5 +112,6 @@ impl Game {
             println!("transfer");
         }
         self.from_tube = None;
+        self.requested_sounds.push("pour.wav");
     }
 }

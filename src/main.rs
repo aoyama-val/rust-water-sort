@@ -205,11 +205,13 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
         let x = 40 + 80 * column;
         let y = 40 + 210 * row;
         if game.from_tube == Some(i) {
-            canvas.set_draw_color(Color::RGB(128, 255, 255));
+            canvas.set_draw_color(Color::RGB(255, 0, 0));
+            canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
+            canvas.draw_rect(Rect::new(x as i32 - 1, y as i32 - 1, width + 2, height + 2))?;
         } else {
             canvas.set_draw_color(Color::WHITE);
+            canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
         }
-        canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
 
         let tube = &game.tubes[i];
         for (j, portion) in tube.iter().enumerate() {
