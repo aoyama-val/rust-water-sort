@@ -13,10 +13,11 @@ mod model;
 use crate::model::*;
 
 pub const TITLE: &str = "rust-water-sort";
-pub const SCREEN_WIDTH: i32 = 450;
+pub const SCREEN_WIDTH: i32 = 400;
 pub const SCREEN_HEIGHT: i32 = 460;
-pub const CARD_W: i32 = 124;
-pub const CARD_H: i32 = 176;
+const TUBE_PER_ROW: u32 = 5;
+const PORTION_WIDTH: u32 = 40;
+const PORTION_HEIGHT: u32 = 36;
 
 struct Image<'a> {
     texture: Texture<'a>,
@@ -73,16 +74,8 @@ pub fn main() -> Result<(), String> {
     let mut clickable_rects: Vec<(usize, Rect)> = Vec::new();
 
     for i in 0..TUBE_COUNT {
-        const TUBE_PER_ROW: u32 = 5;
-        let column: u32 = i as u32 % TUBE_PER_ROW;
-        let row: u32 = i as u32 / TUBE_PER_ROW;
-        const PORTION_WIDTH: u32 = 50;
-        const PORTION_HEIGHT: u32 = 36;
-        let width = PORTION_WIDTH + 2;
-        let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
-        let x = 40 + 80 * column;
-        let y = 40 + 210 * row;
-        clickable_rects.push((i, Rect::new(x as i32, y as i32, width, height)));
+        let rect = get_rect(i);
+        clickable_rects.push((i, rect));
     }
 
     'running: loop {
@@ -195,22 +188,19 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
     canvas.clear();
 
     for i in 0..TUBE_COUNT {
-        const TUBE_PER_ROW: u32 = 5;
-        let column: u32 = i as u32 % TUBE_PER_ROW;
-        let row: u32 = i as u32 / TUBE_PER_ROW;
-        const PORTION_WIDTH: u32 = 50;
-        const PORTION_HEIGHT: u32 = 36;
-        let width = PORTION_WIDTH + 2;
-        let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
-        let x = 40 + 80 * column;
-        let y = 40 + 210 * row;
+        let rect = get_rect(i);
         if game.from_tube == Some(i) {
             canvas.set_draw_color(Color::RGB(255, 0, 0));
-            canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
-            canvas.draw_rect(Rect::new(x as i32 - 1, y as i32 - 1, width + 2, height + 2))?;
+            canvas.draw_rect(rect)?;
+            canvas.draw_rect(Rect::new(
+                rect.x - 1,
+                rect.y - 1,
+                rect.width() + 2,
+                rect.height() + 2,
+            ))?;
         } else {
             canvas.set_draw_color(Color::WHITE);
-            canvas.draw_rect(Rect::new(x as i32, y as i32, width, height))?;
+            canvas.draw_rect(rect)?;
         }
 
         let tube = &game.tubes[i];
@@ -227,8 +217,8 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
                 _ => panic!(),
             };
             canvas.set_draw_color(color);
-            let x = x + 1;
-            let y: u32 = y + 14 + (MAX_PORTION as u32 - j as u32 - 1) * PORTION_HEIGHT;
+            let x = rect.x + 1;
+            let y: u32 = rect.y as u32 + 14 + (MAX_PORTION as u32 - j as u32 - 1) * PORTION_HEIGHT;
             canvas.fill_rect(Rect::new(x as i32, y as i32, PORTION_WIDTH, PORTION_HEIGHT))?;
         }
     }
@@ -236,6 +226,16 @@ fn render(canvas: &mut Canvas<Window>, game: &Game, resources: &Resources) -> Re
     canvas.present();
 
     Ok(())
+}
+
+fn get_rect(index: usize) -> Rect {
+    let column: u32 = index as u32 % TUBE_PER_ROW;
+    let row: u32 = index as u32 / TUBE_PER_ROW;
+    let width = PORTION_WIDTH + 2;
+    let height = PORTION_HEIGHT * MAX_PORTION as u32 + 15;
+    let x = 40 + 70 * column;
+    let y = 40 + 210 * row;
+    Rect::new(x as i32, y as i32, width, height)
 }
 
 fn play_sounds(game: &mut Game, resources: &Resources) {
