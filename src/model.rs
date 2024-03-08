@@ -161,27 +161,4 @@ impl Game {
             self.requested_sounds.push("bravo.wav");
         }
     }
-
-    // pub fn get_portion_percentage(&self, tube_index: usize, portion_index: usize) -> f32 {
-    //     if self.state != GameState::Transfering || Some(tube_index) != self.from_tube {
-    //         return 1.0;
-    //     }
-    //     let percent = (self.transfering_wait as f32) / ((TRANSFERING_WAIT + 1) as f32)
-    //         * (self.transferred_count as f32);
-    //     let transfering_index = self.tubes[portion_index].len() + percent as usize;
-    //     let result = if portion_index == transfering_index {
-    //         percent - percent.floor()
-    //     } else {
-    //         1.0
-    //     };
-    //     println!("{} {} {}", percent, portion_index, result);
-    //     result
-    // }
-
-    pub fn get_transferring_portion(&self, tube_index: usize) -> Option<(f32)> {
-        if self.state != GameState::Transfering || Some(tube_index) != self.from_tube {
-            return None;
-        }
-        return Some((0.5));
-    }
 }
