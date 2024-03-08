@@ -286,15 +286,7 @@ fn render(
             "Congraturations!".to_string(),
             SCREEN_WIDTH / 2,
             SCREEN_HEIGHT / 2 - 20,
-            match (game.frame / 3) % 6 {
-                0 => Color::RGB(255, 0, 0),
-                1 => Color::RGB(0, 255, 0),
-                2 => Color::RGB(0, 0, 255),
-                3 => Color::RGB(255, 255, 0),
-                4 => Color::RGB(0, 255, 255),
-                5 => Color::RGB(255, 0, 255),
-                _ => panic!(),
-            },
+            Color::RGB(255, 255, 0),
             true,
         );
     }
