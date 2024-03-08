@@ -69,7 +69,6 @@ pub fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut game = Game::new();
-    game.init();
 
     println!("Select tube with mouse");
     println!("Keys:");
@@ -99,7 +98,6 @@ pub fn main() -> Result<(), String> {
                     match code {
                         Keycode::Space => {
                             game = Game::new();
-                            game.init();
                         }
                         _ => {}
                     };

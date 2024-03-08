@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use std::{num, time};
+use std::time;
 
 pub const FPS: i32 = 30;
 pub const TUBE_COUNT: usize = 10;
@@ -27,6 +27,7 @@ pub struct Game {
     pub requested_sounds: Vec<&'static str>,
     pub tubes: Vec<Vec<i32>>,
     pub from_tube: Option<usize>,
+    pub to_tube: Option<usize>,
     pub state: GameState,
     pub transfering_wait: i32,
     pub transferred_count: i32,
@@ -44,23 +45,21 @@ impl Game {
         println!("random seed = {}", timestamp);
         // let rng = StdRng::seed_from_u64(0);
 
-        let game = Game {
+        let mut game = Game {
             rng: rng,
             frame: -1,
             is_clear: false,
             requested_sounds: Vec::new(),
             tubes: Vec::new(),
             from_tube: None,
+            to_tube: None,
             state: GameState::Playing,
             transfering_wait: 0,
             transferred_count: 0,
             transfering_color: 0,
         };
 
-        game
-    }
-
-    pub fn init(&mut self) {
+        // portionをランダムに初期配置
         let mut portions: Vec<i32> = vec![EMPTY; MAX_PORTION * COLOR_COUNT];
         let mut index = 0;
         for i in 0..COLOR_COUNT {
@@ -69,21 +68,19 @@ impl Game {
                 index += 1;
             }
         }
-        portions.shuffle(&mut self.rng);
+        portions.shuffle(&mut game.rng);
 
-        self.frame = -1;
-        self.tubes = Vec::new();
-        self.transferred_count = 0;
-        self.transfering_color = 0;
-
+        // portionを各tubeにセット
         for i in 0..COLOR_COUNT {
             let tube: Vec<i32> = portions[(i * MAX_PORTION)..((i + 1) * MAX_PORTION)].to_vec();
-            self.tubes.push(tube);
+            game.tubes.push(tube);
         }
-        for i in 0..(TUBE_COUNT - COLOR_COUNT) {
-            self.tubes.push(Vec::new());
+        // 空のtubeをセット
+        for _ in 0..(TUBE_COUNT - COLOR_COUNT) {
+            game.tubes.push(Vec::new());
         }
-        println!("tubes: {:?}", self.tubes);
+
+        game
     }
 
     pub fn update(&mut self, command: Command) {
