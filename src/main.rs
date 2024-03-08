@@ -202,9 +202,10 @@ fn render(
     game: &Game,
     resources: &mut Resources,
 ) -> Result<(), String> {
+    let clear_color = Color::BLACK;
     let font = resources.fonts.get_mut("boxfont").unwrap();
 
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
+    canvas.set_draw_color(clear_color);
     canvas.clear();
 
     for i in 0..TUBE_COUNT {
@@ -225,21 +226,39 @@ fn render(
 
         let tube = &game.tubes[i];
         for (j, portion) in tube.iter().enumerate() {
-            let color = match portion {
-                1 => Color::RGB(192, 0, 0),
-                2 => Color::RGB(0, 192, 0),
-                3 => Color::RGB(0, 0, 192),
-                4 => Color::RGB(192, 192, 0),
-                5 => Color::RGB(0, 192, 192),
-                6 => Color::RGB(192, 0, 192),
-                7 => Color::RGB(192, 192, 192),
-                8 => Color::RGB(255, 96, 0),
-                _ => panic!(),
-            };
+            let color = get_color(*portion);
             canvas.set_draw_color(color);
             let x = rect.x + 1;
             let y: u32 = rect.y as u32 + 14 + (MAX_PORTION as u32 - j as u32 - 1) * PORTION_HEIGHT;
             canvas.fill_rect(Rect::new(x as i32, y as i32, PORTION_WIDTH, PORTION_HEIGHT))?;
+        }
+
+        if let Some((transfering)) = game.get_transferring_portion(i) {
+            let color = get_color(game.transfering_color);
+            // FIXME: アニメーションはやっつけ
+            // 移動中のportionの全体を描く
+            let j = game.tubes[i].len() - 1 + game.transferred_count as usize;
+            println!("{} {}", game.tubes[i].len(), game.transferred_count);
+            let x = rect.x + 1;
+            let y: i32 = rect.y + 14 + (MAX_PORTION as i32 - j as i32 - 1) * PORTION_HEIGHT as i32;
+            canvas.set_draw_color(color);
+            canvas.fill_rect(Rect::new(
+                x as i32,
+                y as i32,
+                PORTION_WIDTH,
+                PORTION_HEIGHT * game.transferred_count as u32,
+            ))?;
+            // 移動中のportionの移動済みの部分を黒で塗りつぶす
+            canvas.set_draw_color(clear_color);
+            canvas.fill_rect(Rect::new(
+                x as i32,
+                y as i32,
+                PORTION_WIDTH,
+                (PORTION_HEIGHT as f32
+                    * game.transferred_count as f32
+                    * ((TRANSFERING_WAIT + 1 - game.transfering_wait) as f32
+                        / TRANSFERING_WAIT as f32)) as u32,
+            ))?;
         }
     }
 
@@ -276,6 +295,20 @@ fn get_rect(index: usize) -> Rect {
     let x = 40 + 70 * column;
     let y = 40 + 210 * row;
     Rect::new(x as i32, y as i32, width, height)
+}
+
+fn get_color(color: i32) -> Color {
+    match color {
+        1 => Color::RGB(192, 0, 0),
+        2 => Color::RGB(0, 192, 0),
+        3 => Color::RGB(0, 0, 192),
+        4 => Color::RGB(192, 192, 0),
+        5 => Color::RGB(0, 192, 192),
+        6 => Color::RGB(192, 0, 192),
+        7 => Color::RGB(192, 192, 192),
+        8 => Color::RGB(255, 96, 0),
+        _ => panic!(),
+    }
 }
 
 fn play_sounds(game: &mut Game, resources: &Resources) {

@@ -6,11 +6,18 @@ pub const TUBE_COUNT: usize = 10;
 pub const MAX_PORTION: usize = 4;
 pub const COLOR_COUNT: usize = TUBE_COUNT - 2;
 pub const EMPTY: i32 = 0;
+pub const TRANSFERING_WAIT: i32 = 15;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Command {
     None,
     Select(usize),
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum GameState {
+    Playing,
+    Transfering,
 }
 
 pub struct Game {
@@ -20,6 +27,10 @@ pub struct Game {
     pub requested_sounds: Vec<&'static str>,
     pub tubes: Vec<Vec<i32>>,
     pub from_tube: Option<usize>,
+    pub state: GameState,
+    pub transfering_wait: i32,
+    pub transferred_count: i32,
+    pub transfering_color: i32,
 }
 
 impl Game {
@@ -40,6 +51,10 @@ impl Game {
             requested_sounds: Vec::new(),
             tubes: Vec::new(),
             from_tube: None,
+            state: GameState::Playing,
+            transfering_wait: 0,
+            transferred_count: 0,
+            transfering_color: 0,
         };
 
         game
@@ -58,6 +73,8 @@ impl Game {
 
         self.frame = -1;
         self.tubes = Vec::new();
+        self.transferred_count = 0;
+        self.transfering_color = 0;
 
         for i in 0..COLOR_COUNT {
             let tube: Vec<i32> = portions[(i * MAX_PORTION)..((i + 1) * MAX_PORTION)].to_vec();
@@ -71,6 +88,17 @@ impl Game {
 
     pub fn update(&mut self, command: Command) {
         self.frame += 1;
+
+        if self.state == GameState::Transfering {
+            self.transfering_wait -= 1;
+            if self.transfering_wait == 0 {
+                self.state = GameState::Playing;
+                self.from_tube = None;
+                self.transferred_count = 0;
+                self.check_clear();
+            }
+            return;
+        }
 
         if self.is_clear {
             return;
@@ -89,7 +117,6 @@ impl Game {
                         self.from_tube = None;
                     } else if self.transferrable_to(index) {
                         self.transfer(index);
-                        self.check_clear();
                     }
                 }
             }
@@ -109,17 +136,20 @@ impl Game {
     pub fn transfer(&mut self, index: usize) {
         println!("transfer {} -> {}", self.from_tube.unwrap(), index);
         let from_tube = self.from_tube.unwrap();
-        let move_color = *self.tubes[from_tube].last().unwrap();
+        self.transfering_color = *self.tubes[from_tube].last().unwrap();
+        self.transferred_count = 0;
         while self.tubes[from_tube].len() > 0
-            && *self.tubes[from_tube].last().unwrap() == move_color
+            && *self.tubes[from_tube].last().unwrap() == self.transfering_color
             && self.tubes[index].len() < MAX_PORTION
         {
             let portion = self.tubes[from_tube].pop().unwrap();
             self.tubes[index].push(portion);
             println!("transfer");
+            self.transferred_count += 1;
         }
-        self.from_tube = None;
         self.requested_sounds.push("pour.wav");
+        self.state = GameState::Transfering;
+        self.transfering_wait = TRANSFERING_WAIT;
     }
 
     pub fn check_clear(&mut self) {
@@ -130,5 +160,28 @@ impl Game {
             self.is_clear = true;
             self.requested_sounds.push("bravo.wav");
         }
+    }
+
+    // pub fn get_portion_percentage(&self, tube_index: usize, portion_index: usize) -> f32 {
+    //     if self.state != GameState::Transfering || Some(tube_index) != self.from_tube {
+    //         return 1.0;
+    //     }
+    //     let percent = (self.transfering_wait as f32) / ((TRANSFERING_WAIT + 1) as f32)
+    //         * (self.transferred_count as f32);
+    //     let transfering_index = self.tubes[portion_index].len() + percent as usize;
+    //     let result = if portion_index == transfering_index {
+    //         percent - percent.floor()
+    //     } else {
+    //         1.0
+    //     };
+    //     println!("{} {} {}", percent, portion_index, result);
+    //     result
+    // }
+
+    pub fn get_transferring_portion(&self, tube_index: usize) -> Option<(f32)> {
+        if self.state != GameState::Transfering || Some(tube_index) != self.from_tube {
+            return None;
+        }
+        return Some((0.5));
     }
 }
