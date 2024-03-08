@@ -1,11 +1,13 @@
 use rand::prelude::*;
 use std::time;
 
+pub type PortionColor = i32;
+
 pub const FPS: i32 = 30;
 pub const TUBE_COUNT: usize = 10;
 pub const MAX_PORTION: usize = 4;
 pub const COLOR_COUNT: usize = TUBE_COUNT - 2;
-pub const EMPTY: i32 = 0;
+pub const EMPTY: PortionColor = 0;
 pub const TRANSFERING_WAIT: i32 = 15;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -25,13 +27,13 @@ pub struct Game {
     pub frame: i32,
     pub is_clear: bool,
     pub requested_sounds: Vec<&'static str>,
-    pub tubes: Vec<Vec<i32>>,
+    pub tubes: Vec<Vec<PortionColor>>,
     pub from_tube: Option<usize>,
     pub to_tube: Option<usize>,
     pub state: GameState,
     pub transfering_wait: i32,
     pub transferred_count: i32,
-    pub transfering_color: i32,
+    pub transfering_color: PortionColor,
 }
 
 impl Game {
@@ -60,11 +62,11 @@ impl Game {
         };
 
         // portionをランダムに初期配置
-        let mut portions: Vec<i32> = vec![EMPTY; MAX_PORTION * COLOR_COUNT];
+        let mut portions: Vec<PortionColor> = vec![EMPTY; MAX_PORTION * COLOR_COUNT];
         let mut index = 0;
         for i in 0..COLOR_COUNT {
             for _ in 0..MAX_PORTION {
-                portions[index] = i as i32 + 1;
+                portions[index] = (i + 1) as PortionColor;
                 index += 1;
             }
         }
@@ -72,7 +74,8 @@ impl Game {
 
         // portionを各tubeにセット
         for i in 0..COLOR_COUNT {
-            let tube: Vec<i32> = portions[(i * MAX_PORTION)..((i + 1) * MAX_PORTION)].to_vec();
+            let tube: Vec<PortionColor> =
+                portions[(i * MAX_PORTION)..((i + 1) * MAX_PORTION)].to_vec();
             game.tubes.push(tube);
         }
         // 空のtubeをセット
@@ -91,6 +94,7 @@ impl Game {
             if self.transfering_wait == 0 {
                 self.state = GameState::Playing;
                 self.from_tube = None;
+                self.to_tube = None;
                 self.transferred_count = 0;
                 self.check_clear();
             }
@@ -107,7 +111,6 @@ impl Game {
                 if self.from_tube == None {
                     if self.transferrable_from(index) {
                         self.from_tube = Some(index);
-                        println!("from: {index}");
                     }
                 } else {
                     if self.from_tube == Some(index) {
@@ -131,7 +134,7 @@ impl Game {
     }
 
     pub fn transfer(&mut self, index: usize) {
-        println!("transfer {} -> {}", self.from_tube.unwrap(), index);
+        self.to_tube = Some(index);
         let from_tube = self.from_tube.unwrap();
         self.transfering_color = *self.tubes[from_tube].last().unwrap();
         self.transferred_count = 0;
@@ -141,7 +144,6 @@ impl Game {
         {
             let portion = self.tubes[from_tube].pop().unwrap();
             self.tubes[index].push(portion);
-            println!("transfer");
             self.transferred_count += 1;
         }
         self.requested_sounds.push("pour.wav");

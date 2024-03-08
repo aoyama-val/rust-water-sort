@@ -236,8 +236,7 @@ fn render(
                 let color = get_color(game.transfering_color);
                 // FIXME: アニメーションはやっつけ
                 // 移動中のportionの全体を描く
-                let j = game.tubes[i].len() - 1 + game.transferred_count as usize;
-                println!("{} {}", game.tubes[i].len(), game.transferred_count);
+                let j = game.tubes[i].len() + game.transferred_count as usize - 1;
                 let x = rect.x + 1;
                 let y: i32 =
                     rect.y + 14 + (MAX_PORTION as i32 - j as i32 - 1) * PORTION_HEIGHT as i32;
