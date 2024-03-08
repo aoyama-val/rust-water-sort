@@ -231,10 +231,10 @@ fn render(
             canvas.fill_rect(Rect::new(x as i32, y as i32, PORTION_WIDTH, PORTION_HEIGHT))?;
         }
 
+        // アニメーションはいささかやっつけ
         if game.state == GameState::Transfering {
             if Some(i) == game.from_tube {
                 let color = get_color(game.transfering_color);
-                // FIXME: アニメーションはやっつけ
                 // 移動中のportionの全体を描く
                 let j = game.tubes[i].len() + game.transferred_count as usize - 1;
                 let x = rect.x + 1;
@@ -257,6 +257,23 @@ fn render(
                         * game.transferred_count as f32
                         * ((TRANSFERING_WAIT + 1 - game.transfering_wait) as f32
                             / TRANSFERING_WAIT as f32)) as u32,
+                ))?;
+            }
+            if Some(i) == game.to_tube {
+                let j = game.tubes[i].len() - 1;
+                let x = rect.x + 1;
+                let y: u32 =
+                    rect.y as u32 + 14 + (MAX_PORTION as u32 - j as u32 - 1) * PORTION_HEIGHT;
+                canvas.set_draw_color(clear_color);
+                canvas.fill_rect(Rect::new(
+                    x as i32,
+                    y as i32,
+                    PORTION_WIDTH,
+                    (PORTION_HEIGHT as f32
+                        * game.transferred_count as f32
+                        * (1.0
+                            - ((TRANSFERING_WAIT + 1 - game.transfering_wait) as f32
+                                / TRANSFERING_WAIT as f32))) as u32,
                 ))?;
             }
         }
